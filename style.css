@@ -1,0 +1,123 @@
+:root {
+    --bg-color: #f4f4f9;
+    --text-color: #333;
+    --accent-color: #2c3e50;
+    --circle-blue: #3498db;
+    --square-orange: #e67e22;
+    --reward-color: #27ae60;
+    --no-reward-color: #c0392b;
+}
+
+body, html {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    overflow: hidden; /* Prevent scrolling during experiment */
+}
+
+/* Screen Management */
+.screen {
+    display: none;
+    height: 100vh;
+    width: 100vw;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    text-align: center;
+}
+
+.screen.active {
+    display: flex;
+}
+
+.container {
+    max-width: 600px;
+    padding: 40px;
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* Task Layouts */
+#stimulus-container {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 100px;
+    height: 400px;
+    width: 100%;
+    transition: all 0.5s ease-in-out;
+}
+
+/* Layout Orientations */
+#stimulus-container.horizontal { flex-direction: row; }
+#stimulus-container.vertical { flex-direction: column; }
+
+/* Anchoring States */
+#stimulus-container.anchor-up { transform: translateY(-50px); }
+#stimulus-container.anchor-down { transform: translateY(50px); }
+#stimulus-container.anchor-center { transform: translateY(0); }
+
+/* Bandits */
+.bandit {
+    cursor: pointer;
+    transition: transform 0.1s, filter 0.2s;
+}
+
+.bandit:hover {
+    transform: scale(1.05);
+    filter: brightness(1.1);
+}
+
+.bandit:active {
+    transform: scale(0.95);
+}
+
+/* Shapes */
+.shape-circle {
+    width: 120px;
+    height: 120px;
+    border-radius: 50%;
+}
+
+.shape-square {
+    width: 120px;
+    height: 120px;
+}
+
+/* Typography & UI */
+h1 { margin-bottom: 20px; }
+.instruction-box { text-align: left; margin-bottom: 30px; line-height: 1.6; }
+.input-group { margin-bottom: 20px; }
+input { padding: 10px; border-radius: 4px; border: 1px solid #ccc; width: 200px; }
+
+.btn-primary, .btn-secondary {
+    padding: 12px 30px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 600;
+    margin: 5px;
+}
+
+.btn-primary { background: var(--accent-color); color: white; }
+.btn-secondary { background: #95a5a6; color: white; }
+
+/* Task Elements */
+.fixation { font-size: 60px; color: #aaa; }
+#feedback-area { height: 60px; margin-top: 20px; font-weight: bold; }
+.reward { color: var(--reward-color); }
+.no-reward { color: var(--no-reward-color); }
+
+/* Summary Stats */
+.summary-box { text-align: left; background: #eee; padding: 20px; border-radius: 8px; margin: 20px 0; }
+
+/* Debug */
+#debug-panel {
+    position: absolute; bottom: 10px; left: 10px; background: rgba(0,0,0,0.8);
+    color: lime; padding: 10px; font-family: monospace; z-index: 1000;
+}
