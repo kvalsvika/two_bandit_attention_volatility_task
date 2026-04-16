@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decision Making Study</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+    <div id="screen-intro" class="screen active">
+        <div class="container">
+            <h1>Psychology Study: Decision Making</h1>
+            <div class="instruction-box">
+                <p>Welcome! In this task, you will complete 3 blocks of choices.</p>
+                <ul>
+                    <li>On each trial, choose between two options.</li>
+                    <li>Some options are more likely to give a reward (+1) than others.</li>
+                    <li>Reward probabilities may change over time.</li>
+                    <li><strong>Goal:</strong> Earn as many rewards as possible.</li>
+                    <li>Visuals may change, but the reward depends on the underlying shape, not its color or location.</li>
+                </ul>
+                <p>Please use a desktop browser and respond as accurately as possible.</p>
+            </div>
+            
+            <div class="input-group">
+                <label for="participant-id">Participant ID:</label>
+                <input type="text" id="participant-id" placeholder="Enter ID or leave blank for random">
+            </div>
+            
+            <button id="btn-start" class="btn-primary">Start Task</button>
+        </div>
+    </div>
+
+    <div id="screen-transition" class="screen">
+        <div class="container">
+            <h2 id="block-title">Block X of 3</h2>
+            <p>Choose the option most likely to be rewarded.</p>
+            <button id="btn-next-block" class="btn-primary">Continue</button>
+        </div>
+    </div>
+
+    <div id="screen-task" class="screen">
+        <div id="fixation" class="fixation">+</div>
+        
+        <div id="stimulus-container">
+            <div id="bandit-left" class="bandit" data-pos="left"></div>
+            <div id="bandit-right" class="bandit" data-pos="right"></div>
+        </div>
+
+        <div id="feedback-area">
+            <h2 id="feedback-text"></h2>
+        </div>
+    </div>
+
+    <div id="screen-results" class="screen">
+        <div class="container">
+            <h1>Task Complete</h1>
+            <p>Thank you for your participation!</p>
+            
+            <div id="summary-stats" class="summary-box">
+                </div>
+
+            <div class="button-row">
+                <button id="btn-download" class="btn-secondary">Download CSV</button>
+                <button onclick="location.reload()" class="btn-primary">Restart Task</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="debug-panel" style="display:none;">
+        <h3>Debug</h3>
+        <p id="debug-info"></p>
+    </div>
+
+    <script src="js/script.js"></script>
+</body>
+</html>
