@@ -5,7 +5,7 @@
 // 1. PASTE YOUR GOOGLE WEB APP URL HERE
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby5LRdFJP2sLEpTNSQfjtxBsBjuMc6KRCu6YcMoIhLav0BTTKsGtUvpInV2ktwckW6f/exec"; 
 
-const TRIALS_PER_BLOCK = 8; // Set to 5 or 8 for testing, 80 for real study
+const TRIALS_PER_BLOCK = 80; // Set to 5 or 8 for testing, 80 for real study
 const PROB_HIGH = 0.7;
 const PROB_LOW = 0.3;
 const FIXATION_DURATION = 500;
