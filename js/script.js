@@ -1,22 +1,19 @@
 /**
- * TWO-ARMED BANDIT TASK
- * Core Logic & State Management
+ * TWO-ARMED BANDIT TASK - FRONTEND
  */
 
-const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_-9HJtWaU2rNSePtmrEgEZyvG-DRh--KuCZGX58NehhMCL__8MpkhIAlG1b2U5-Gr/exec"; // Fill with your Google Apps Script URL
+// 1. PASTE YOUR GOOGLE WEB APP URL HERE
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycby5LRdFJP2sLEpTNSQfjtxBsBjuMc6KRCu6YcMoIhLav0BTTKsGtUvpInV2ktwckW6f/exec"; 
 
-// --- Configuration ---
-const TRIALS_PER_BLOCK = 8;
+const TRIALS_PER_BLOCK = 80; // Set to 5 or 8 for testing, 80 for real study
 const PROB_HIGH = 0.7;
 const PROB_LOW = 0.3;
 const FIXATION_DURATION = 500;
 const FEEDBACK_DURATION = 750;
 
-// Reversal Schedules
 const REVERSALS_STABLE = [17, 36, 57, 74];
 const REVERSALS_VOLATILE = [9, 17, 25, 33, 42, 50, 59, 68, 75];
 
-// --- State Variables ---
 let pID = "";
 let currentBlockIndex = 0;
 let currentTrialInBlock = 0;
@@ -25,42 +22,29 @@ let blockSequence = [];
 let trialData = [];
 let isChoiceAllowed = false;
 let stimulusOnset = 0;
+let highRewardShape = "Circle";
+let currentBlockType = "";
 
-let highRewardShape = "Circle"; // Default
-let currentBlockType = ""; // Stable, Volatile, Attention
-
-// --- Initialization & Counterbalancing ---
-document.getElementById('btn-start').addEventListener('click', startExperiment);
-
-function startExperiment() {
+// --- Initialization ---
+document.getElementById('btn-start').addEventListener('click', () => {
     const inputID = document.getElementById('participant-id').value.trim();
     pID = inputID || Math.random().toString(36).substring(2, 8).toUpperCase();
-    
     setupCounterbalancing(pID);
     showScreen('screen-transition');
     updateTransitionScreen();
-}
+});
 
 function setupCounterbalancing(id) {
-    // Simple hash for deterministic assignment
     const hash = id.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-    
-    // 1. Assign Block Order (6 possible orders)
     const orders = [
-        ['Stable', 'Volatile', 'Attention'],
-        ['Stable', 'Attention', 'Volatile'],
-        ['Volatile', 'Stable', 'Attention'],
-        ['Volatile', 'Attention', 'Stable'],
-        ['Attention', 'Stable', 'Volatile'],
-        ['Attention', 'Volatile', 'Stable']
+        ['Stable', 'Volatile', 'Attention'], ['Stable', 'Attention', 'Volatile'],
+        ['Volatile', 'Stable', 'Attention'], ['Volatile', 'Attention', 'Stable'],
+        ['Attention', 'Stable', 'Volatile'], ['Attention', 'Volatile', 'Stable']
     ];
     blockSequence = orders[hash % 6];
-
-    // 2. Assign Initial High Reward Shape
     highRewardShape = (hash % 2 === 0) ? "Circle" : "Square";
 }
 
-// --- Task Flow Control ---
 function showScreen(screenId) {
     document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
     document.getElementById(screenId).classList.add('active');
@@ -75,89 +59,52 @@ function updateTransitionScreen() {
     };
 }
 
-// --- Trial Logic ---
+// --- Trial Engine ---
 function runTrial() {
     isChoiceAllowed = false;
     currentTrialInBlock++;
     globalTrialCounter++;
     
-    const container = document.getElementById('stimulus-container');
-    const banditL = document.getElementById('bandit-left');
-    const banditR = document.getElementById('bandit-right');
-    const fixation = document.getElementById('fixation');
-    
-    // Reset View
-    container.style.display = 'none';
-    fixation.style.display = 'block';
+    document.getElementById('stimulus-container').style.display = 'none';
+    document.getElementById('fixation').style.display = 'block';
     document.getElementById('feedback-text').innerText = '';
 
-    // Determine Reversals
     const sched = (currentBlockType === 'Volatile') ? REVERSALS_VOLATILE : REVERSALS_STABLE;
     if (sched.includes(currentTrialInBlock)) {
         highRewardShape = (highRewardShape === "Circle") ? "Square" : "Circle";
     }
 
-    // Set Visual State
-    const visual = getVisualState(currentBlockType, currentTrialInBlock);
-    applyVisualState(visual);
+    applyVisualState(getVisualState(currentBlockType, currentTrialInBlock));
 
-    // Timing: Fixation -> Stimulus
     setTimeout(() => {
-        fixation.style.display = 'none';
-        container.style.display = 'flex';
+        document.getElementById('fixation').style.display = 'none';
+        document.getElementById('stimulus-container').style.display = 'flex';
         stimulusOnset = Date.now();
         isChoiceAllowed = true;
     }, FIXATION_DURATION);
 }
 
 function getVisualState(type, trial) {
-    // Default state
-    let state = {
-        axis: 'horizontal',
-        circlePos: 'left',
-        squarePos: 'right',
-        circleCol: 'var(--circle-blue)',
-        squareCol: 'var(--square-orange)',
-        anchor: 'anchor-center',
-        label: 'standard'
-    };
-
+    let s = { axis: 'horizontal', circlePos: 'left', squarePos: 'right', circleCol: 'var(--circle-blue)', squareCol: 'var(--square-orange)', anchor: 'anchor-center', label: 'standard' };
     if (type === 'Attention') {
-        if (trial >= 13 && trial < 31) {
-            state.axis = 'vertical'; state.circlePos = 'top'; state.squarePos = 'bottom'; state.label = 'remap1';
-        } else if (trial >= 31 && trial < 49) {
-            state.axis = 'vertical'; state.circlePos = 'top'; state.squarePos = 'bottom'; 
-            state.circleCol = 'var(--square-orange)'; state.squareCol = 'var(--circle-blue)';
-            state.anchor = 'anchor-up'; state.label = 'remap2';
-        } else if (trial >= 49 && trial < 67) {
-            state.axis = 'horizontal'; state.circlePos = 'right'; state.squarePos = 'left';
-            state.circleCol = 'var(--square-orange)'; state.squareCol = 'var(--circle-blue)';
-            state.label = 'remap3';
-        } else if (trial >= 67) {
-            state.axis = 'horizontal'; state.circlePos = 'right'; state.squarePos = 'left';
-            state.anchor = 'anchor-down'; state.label = 'remap4';
-        }
+        if (trial >= 13 && trial < 31) { s.axis = 'vertical'; s.circlePos = 'top'; s.squarePos = 'bottom'; s.label = 'remap1'; }
+        else if (trial >= 31 && trial < 49) { s.axis = 'vertical'; s.circlePos = 'top'; s.squarePos = 'bottom'; s.circleCol = 'var(--square-orange)'; s.squareCol = 'var(--circle-blue)'; s.anchor = 'anchor-up'; s.label = 'remap2'; }
+        else if (trial >= 49 && trial < 67) { s.axis = 'horizontal'; s.circlePos = 'right'; s.squarePos = 'left'; s.circleCol = 'var(--square-orange)'; s.squareCol = 'var(--circle-blue)'; s.label = 'remap3'; }
+        else if (trial >= 67) { s.axis = 'horizontal'; s.circlePos = 'right'; s.squarePos = 'left'; s.anchor = 'anchor-down'; s.label = 'remap4'; }
     }
-    return state;
+    return s;
 }
 
 function applyVisualState(s) {
     const container = document.getElementById('stimulus-container');
-    const banditL = document.getElementById('bandit-left');
-    const banditR = document.getElementById('bandit-right');
-
     container.className = `${s.axis} ${s.anchor}`;
-    
-    // Assign shapes and colors based on positions
+    const bL = document.getElementById('bandit-left');
+    const bR = document.getElementById('bandit-right');
     if (s.circlePos === 'left' || s.circlePos === 'top') {
-        setupBandit(banditL, "Circle", s.circleCol);
-        setupBandit(banditR, "Square", s.squareCol);
+        setupBandit(bL, "Circle", s.circleCol); setupBandit(bR, "Square", s.squareCol);
     } else {
-        setupBandit(banditL, "Square", s.squareCol);
-        setupBandit(banditR, "Circle", s.circleCol);
+        setupBandit(bL, "Square", s.squareCol); setupBandit(bR, "Circle", s.circleCol);
     }
-    
-    // Store current state for data logging
     window.currentVisualState = s;
 }
 
@@ -167,164 +114,93 @@ function setupBandit(el, shape, color) {
     el.dataset.shape = shape;
 }
 
-// --- Interaction & Feedback ---
 document.querySelectorAll('.bandit').forEach(el => {
     el.addEventListener('click', (e) => {
         if (!isChoiceAllowed) return;
-        handleChoice(e.currentTarget.dataset.shape, e.currentTarget.dataset.pos);
+        isChoiceAllowed = false;
+        const rt = Date.now() - stimulusOnset;
+        const chosenShape = e.currentTarget.dataset.shape;
+        const pSuccess = (chosenShape === highRewardShape) ? PROB_HIGH : PROB_LOW;
+        const rewarded = Math.random() < pSuccess ? 1 : 0;
+
+        const fb = document.getElementById('feedback-text');
+        fb.innerText = rewarded ? "+1" : "No Reward";
+        fb.className = rewarded ? "reward" : "no-reward";
+
+        logTrialData(chosenShape, rewarded, rt, pSuccess);
+
+        setTimeout(() => {
+            if (currentTrialInBlock < TRIALS_PER_BLOCK) runTrial();
+            else endBlock();
+        }, FEEDBACK_DURATION);
     });
 });
 
-function handleChoice(chosenShape, chosenPos) {
-    isChoiceAllowed = false;
-    const rt = Date.now() - stimulusOnset;
-    
-    // Determine Outcome
-    const isHighProb = (chosenShape === highRewardShape);
-    const pSuccess = isHighProb ? PROB_HIGH : PROB_LOW;
-    const rewarded = Math.random() < pSuccess ? 1 : 0;
-
-    // Display Feedback
-    const fbText = document.getElementById('feedback-text');
-    fbText.innerText = rewarded ? "+1" : "No Reward";
-    fbText.className = rewarded ? "reward" : "no-reward";
-
-    // Log Data
-    logTrialData(chosenShape, chosenPos, rewarded, rt, pSuccess);
-
-    // Next Step
-    setTimeout(() => {
-        if (currentTrialInBlock < TRIALS_PER_BLOCK) {
-            runTrial();
-        } else {
-            endBlock();
-        }
-    }, FEEDBACK_DURATION);
-}
-
-function logTrialData(chosenShape, chosenPos, rewarded, rt, pChosen) {
+function logTrialData(chosenShape, rewarded, rt, pChosen) {
     const s = window.currentVisualState;
     const sched = (currentBlockType === 'Volatile') ? REVERSALS_VOLATILE : REVERSALS_STABLE;
-    
-    const row = {
-        participant_id: pID,
-        assigned_block_order: blockSequence.join('-'),
-        block_index: currentBlockIndex + 1,
-        block_name: currentBlockType,
-        trial_in_block: currentTrialInBlock,
-        global_trial: globalTrialCounter,
-        timestamp_iso: new Date().toISOString(),
-        chosen_shape: chosenShape,
-        chosen_position: chosenPos,
-        circle_position: s.circlePos,
-        square_position: s.squarePos,
-        axis: s.axis,
-        anchor_state: s.anchor,
-        circle_color: s.circleCol,
-        square_color: s.squareCol,
-        high_reward_shape: highRewardShape,
-        reward_probability_chosen: pChosen,
-        outcome_rewarded: rewarded,
-        reaction_time_ms: rt,
-        reward_reversal_on_this_trial: sched.includes(currentTrialInBlock) ? 1 : 0,
+    trialData.push({
+        participant_id: pID, block_index: currentBlockIndex + 1, block_name: currentBlockType,
+        trial_in_block: currentTrialInBlock, global_trial: globalTrialCounter, timestamp_iso: new Date().toISOString(),
+        chosen_shape: chosenShape, circle_position: s.circlePos, square_position: s.squarePos,
+        axis: s.axis, anchor_state: s.anchor, circle_color: s.circleCol, square_color: s.squareCol,
+        high_reward_shape: highRewardShape, reward_probability_chosen: pChosen, outcome_rewarded: rewarded,
+        reaction_time_ms: rt, reward_reversal_on_this_trial: sched.includes(currentTrialInBlock) ? 1 : 0,
         visual_remap_on_this_trial: (currentBlockType === 'Attention' && [13, 31, 49, 67].includes(currentTrialInBlock)) ? 1 : 0,
         visual_state_label: s.label
-    };
-    trialData.push(row);
+    });
 }
 
-// Example logic to trigger at the end of a block
-async function uploadBlockData(blockType, blockIdx) {
+// --- The Transition Logic ---
+async function endBlock() {
+    const blockIdx = currentBlockIndex + 1;
     const blockTrials = trialData.filter(d => d.block_index === blockIdx);
-    
-    // Calculate summaries as requested by backend
+
+    // 1. Calculate Summary
     const summary = {
         block_total_rewards: blockTrials.reduce((s, r) => s + r.outcome_rewarded, 0),
-        block_mean_rt: blockTrials.reduce((s, r) => s + r.reaction_time_ms, 0) / blockTrials.length,
-        block_optimal_rate: blockTrials.filter(r => r.chosen_shape === r.high_reward_shape).length / blockTrials.length
+        block_mean_rt: Math.round(blockTrials.reduce((s, r) => s + r.reaction_time_ms, 0) / blockTrials.length),
+        block_optimal_rate: (blockTrials.filter(r => r.chosen_shape === (r.reward_probability_chosen === PROB_HIGH ? r.chosen_shape : '')).length / blockTrials.length).toFixed(2)
     };
 
-    const payload = {
-        participant_id: pID,
-        assigned_block_order: blockSequence.join('-'),
-        block_index: blockIdx,
-        block_name: blockType,
-        upload_batch_number: blockIdx, // 1, 2, or 3
-        block_summary: summary,
-        trials: blockTrials
-    };
-
-    if (!APPS_SCRIPT_URL) return;
-
-    try {
-        await fetch(APPS_SCRIPT_URL, {
-            method: "POST",
-            mode: "no-cors", // Required for Google Apps Script redirects
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify(payload)
+    // 2. Background Upload
+    if (APPS_SCRIPT_URL) {
+        fetch(APPS_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: { 'Content-Type': 'text/plain' },
+            body: JSON.stringify({
+                participant_id: pID, assigned_block_order: blockSequence.join('-'),
+                block_index: blockIdx, block_name: currentBlockType,
+                upload_batch_number: blockIdx, block_summary: summary, trials: blockTrials
+            })
         });
-        console.log(`Block ${blockIdx} uploaded successfully.`);
-    } catch (e) {
-        console.error("Upload failed:", e);
+    }
+
+    // 3. UI Transition
+    if (currentBlockIndex < 2) {
+        currentBlockIndex++;
+        currentTrialInBlock = 0;
+        showScreen('screen-transition');
+        updateTransitionScreen();
+    } else {
+        showResults();
     }
 }
 
 function showResults() {
     showScreen('screen-results');
-    const summaryDiv = document.getElementById('summary-stats');
-    
     const totalRewards = trialData.reduce((sum, r) => sum + r.outcome_rewarded, 0);
-    
-    let html = `<h3>Performance Summary</h3>`;
-    html += `<p><strong>ID:</strong> ${pID}</p>`;
-    html += `<p><strong>Total Rewards:</strong> ${totalRewards}</p><ul>`;
-    
-    blockSequence.forEach((name, idx) => {
-        const bData = trialData.filter(d => d.block_index === (idx + 1));
-        const rewards = bData.reduce((sum, r) => sum + r.outcome_rewarded, 0);
-        const avgRT = (bData.reduce((sum, r) => sum + r.reaction_time_ms, 0) / bData.length).toFixed(0);
-        const optimal = (bData.filter(r => r.chosen_shape === r.high_reward_shape).length / bData.length * 100).toFixed(1);
-        
-        html += `<li><strong>${name}:</strong> ${rewards} rewards, Avg RT: ${avgRT}ms, Optimal: ${optimal}%</li>`;
-    });
-    html += `</ul>`;
-    summaryDiv.innerHTML = html;
-
+    document.getElementById('summary-stats').innerHTML = `<h3>Done!</h3><p>ID: ${pID}</p><p>Total Rewards: ${totalRewards}</p>`;
     document.getElementById('btn-download').onclick = downloadCSV;
 }
 
 function downloadCSV() {
     const headers = Object.keys(trialData[0]);
-    const csvRows = [headers.join(',')];
-    
-    for (const row of trialData) {
-        const values = headers.map(header => {
-            const val = row[header];
-            return `"${val}"`;
-        });
-        csvRows.push(values.join(','));
-    }
-    
+    const csvRows = [headers.join(','), ...trialData.map(row => headers.map(h => `"${row[h]}"`).join(','))];
     const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
-    const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
-    a.setAttribute('hidden', '');
-    a.setAttribute('href', url);
-    a.setAttribute('download', `task_data_${pID}.csv`);
-    document.body.appendChild(a);
+    a.href = URL.createObjectURL(blob);
+    a.download = `data_${pID}.csv`;
     a.click();
-    document.body.removeChild(a);
 }
-
-// Debug toggle
-window.addEventListener('keydown', (e) => {
-    if (e.key.toLowerCase() === 'd') {
-        const panel = document.getElementById('debug-panel');
-        panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
-    }
-});
-
-setInterval(() => {
-    document.getElementById('debug-info').innerText = 
-        `Trial: ${currentTrialInBlock} | Global: ${globalTrialCounter} | High: ${highRewardShape}`;
-}, 100);
