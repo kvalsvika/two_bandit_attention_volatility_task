@@ -88,9 +88,9 @@ function getVisualState(type, trial) {
     let s = { axis: 'horizontal', circlePos: 'left', squarePos: 'right', circleCol: 'var(--circle-blue)', squareCol: 'var(--square-orange)', anchor: 'anchor-center', label: 'standard' };
     if (type === 'Attention') {
         if (trial >= 13 && trial < 31) { s.axis = 'vertical'; s.circlePos = 'top'; s.squarePos = 'bottom'; s.label = 'remap1'; }
-        else if (trial >= 31 && trial < 49) { s.axis = 'vertical'; s.circlePos = 'top'; s.squarePos = 'bottom'; s.circleCol = 'var(--square-orange)'; s.squareCol = 'var(--circle-blue)'; s.anchor = 'anchor-up'; s.label = 'remap2'; }
-        else if (trial >= 49 && trial < 67) { s.axis = 'horizontal'; s.circlePos = 'right'; s.squarePos = 'left'; s.circleCol = 'var(--square-orange)'; s.squareCol = 'var(--circle-blue)'; s.label = 'remap3'; }
-        else if (trial >= 67) { s.axis = 'horizontal'; s.circlePos = 'right'; s.squarePos = 'left'; s.anchor = 'anchor-down'; s.label = 'remap4'; }
+        else if (trial >= 31 && trial < 49) { s.axis = 'vertical'; s.circlePos = 'top'; s.squarePos = 'bottom'; s.circleCol = 'var(--circle-purple)'; s.squareCol = 'var(--square-yellow)'; s.anchor = 'anchor-up'; s.label = 'remap2'; }
+        else if (trial >= 49 && trial < 67) { s.axis = 'horizontal'; s.circlePos = 'right'; s.squarePos = 'left';  s.label = 'remap3'; }
+        else if (trial >= 67) { s.axis = 'horizontal'; s.circlePos = 'right'; s.squarePos = 'left'; s.circleCol = 'var(--circle-purple)'; s.squareCol = 'var(--square-yellow)'; s.anchor = 'anchor-down'; s.label = 'remap4'; }
     }
     return s;
 }
