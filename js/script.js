@@ -6,7 +6,7 @@
 const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_-9HJtWaU2rNSePtmrEgEZyvG-DRh--KuCZGX58NehhMCL__8MpkhIAlG1b2U5-Gr/exec"; // Fill with your Google Apps Script URL
 
 // --- Configuration ---
-const TRIALS_PER_BLOCK = 80;
+const TRIALS_PER_BLOCK = 8;
 const PROB_HIGH = 0.7;
 const PROB_LOW = 0.3;
 const FIXATION_DURATION = 500;
