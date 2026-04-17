@@ -3,7 +3,7 @@
  * Core Logic & State Management
  */
 
-const APPS_SCRIPT_URL = ""; // Fill with your Google Apps Script URL
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbx_-9HJtWaU2rNSePtmrEgEZyvG-DRh--KuCZGX58NehhMCL__8MpkhIAlG1b2U5-Gr/exec"; // Fill with your Google Apps Script URL
 
 // --- Configuration ---
 const TRIALS_PER_BLOCK = 80;
@@ -233,27 +233,39 @@ function logTrialData(chosenShape, chosenPos, rewarded, rt, pChosen) {
     trialData.push(row);
 }
 
-// --- End of Block / End of Task ---
-async function endBlock() {
-    // Upload Data
-    if (APPS_SCRIPT_URL) {
-        const blockData = trialData.filter(d => d.block_index === (currentBlockIndex + 1));
-        fetch(APPS_SCRIPT_URL, {
-            method: 'POST',
-            mode: 'no-cors',
-            cache: 'no-cache',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(blockData)
-        }).catch(err => console.log("Upload failed", err));
-    }
+// Example logic to trigger at the end of a block
+async function uploadBlockData(blockType, blockIdx) {
+    const blockTrials = trialData.filter(d => d.block_index === blockIdx);
+    
+    // Calculate summaries as requested by backend
+    const summary = {
+        block_total_rewards: blockTrials.reduce((s, r) => s + r.outcome_rewarded, 0),
+        block_mean_rt: blockTrials.reduce((s, r) => s + r.reaction_time_ms, 0) / blockTrials.length,
+        block_optimal_rate: blockTrials.filter(r => r.chosen_shape === r.high_reward_shape).length / blockTrials.length
+    };
 
-    if (currentBlockIndex < 2) {
-        currentBlockIndex++;
-        currentTrialInBlock = 0;
-        showScreen('screen-transition');
-        updateTransitionScreen();
-    } else {
-        showResults();
+    const payload = {
+        participant_id: pID,
+        assigned_block_order: blockSequence.join('-'),
+        block_index: blockIdx,
+        block_name: blockType,
+        upload_batch_number: blockIdx, // 1, 2, or 3
+        block_summary: summary,
+        trials: blockTrials
+    };
+
+    if (!APPS_SCRIPT_URL) return;
+
+    try {
+        await fetch(APPS_SCRIPT_URL, {
+            method: "POST",
+            mode: "no-cors", // Required for Google Apps Script redirects
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload)
+        });
+        console.log(`Block ${blockIdx} uploaded successfully.`);
+    } catch (e) {
+        console.error("Upload failed:", e);
     }
 }
 
