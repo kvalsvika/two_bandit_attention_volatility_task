@@ -85,31 +85,78 @@ function runTrial() {
 }
 
 function getVisualState(type, trial) {
-    let s = { axis: 'horizontal', circlePos: 'left', squarePos: 'right', circleCol: 'var(--circle-blue)', squareCol: 'var(--square-orange)', anchor: 'anchor-center', label: 'standard' };
+    let s = {
+        axis: 'horizontal',
+        circlePos: 'left',
+        squarePos: 'right',
+        circleCol: 'var(--circle-blue)',
+        squareCol: 'var(--square-orange)',
+        anchor: 'anchor-center',
+        label: 'standard',
+        circleRender: 'circle',
+        squareRender: 'square'
+    };
+
     if (type === 'Attention') {
-        if (trial >= 13 && trial < 31) { s.axis = 'vertical'; s.circlePos = 'top'; s.squarePos = 'bottom'; s.label = 'remap1'; }
-        else if (trial >= 31 && trial < 49) { s.axis = 'vertical'; s.circlePos = 'top'; s.squarePos = 'bottom'; s.circleCol = 'var(--circle-purple)'; s.squareCol = 'var(--square-yellow)'; s.anchor = 'anchor-up'; s.label = 'remap2'; }
-        else if (trial >= 49 && trial < 67) { s.axis = 'horizontal'; s.circlePos = 'right'; s.squarePos = 'left';  s.label = 'remap3'; }
-        else if (trial >= 67) { s.axis = 'horizontal'; s.circlePos = 'right'; s.squarePos = 'left'; s.circleCol = 'var(--circle-purple)'; s.squareCol = 'var(--square-yellow)'; s.anchor = 'anchor-down'; s.label = 'remap4'; }
+        if (trial >= 13 && trial < 31) {
+            s.axis = 'vertical';
+            s.circlePos = 'top';
+            s.squarePos = 'bottom';
+            s.label = 'remap1';
+        }
+        else if (trial >= 31 && trial < 49) {
+            s.axis = 'vertical';
+            s.circlePos = 'top';
+            s.squarePos = 'bottom';
+            s.circleCol = 'var(--circle-purple)';
+            s.squareCol = 'var(--square-yellow)';
+            s.anchor = 'anchor-up';
+            s.label = 'remap2';
+        }
+        else if (trial >= 49 && trial < 67) {
+            s.axis = 'horizontal';
+            s.circlePos = 'right';
+            s.squarePos = 'left';
+            s.circleRender = 'triangle';
+            s.squareRender = 'diamond';
+            s.label = 'remap3';
+        }
+        else if (trial >= 67) {
+            s.axis = 'horizontal';
+            s.circlePos = 'right';
+            s.squarePos = 'left';
+            s.circleCol = 'var(--circle-purple)';
+            s.squareCol = 'var(--square-yellow)';
+            s.anchor = 'anchor-down';
+            s.circleRender = 'triangle';
+            s.squareRender = 'diamond';
+            s.label = 'remap4';
+        }
     }
+
     return s;
 }
 
 function applyVisualState(s) {
     const container = document.getElementById('stimulus-container');
     container.className = `${s.axis} ${s.anchor}`;
+
     const bL = document.getElementById('bandit-left');
     const bR = document.getElementById('bandit-right');
+
     if (s.circlePos === 'left' || s.circlePos === 'top') {
-        setupBandit(bL, "Circle", s.circleCol); setupBandit(bR, "Square", s.squareCol);
+        setupBandit(bL, "Circle", s.circleCol, s.circleRender);
+        setupBandit(bR, "Square", s.squareCol, s.squareRender);
     } else {
-        setupBandit(bL, "Square", s.squareCol); setupBandit(bR, "Circle", s.circleCol);
+        setupBandit(bL, "Square", s.squareCol, s.squareRender);
+        setupBandit(bR, "Circle", s.circleCol, s.circleRender);
     }
+
     window.currentVisualState = s;
 }
 
-function setupBandit(el, shape, color) {
-    el.className = `bandit shape-${shape.toLowerCase()}`;
+function setupBandit(el, shape, color, renderType) {
+    el.className = `bandit shape-${renderType}`;
     el.style.backgroundColor = color;
     el.dataset.shape = shape;
 }
@@ -140,12 +187,24 @@ function logTrialData(chosenShape, rewarded, rt, pChosen) {
     const s = window.currentVisualState;
     const sched = (currentBlockType === 'Volatile') ? REVERSALS_VOLATILE : REVERSALS_STABLE;
     trialData.push({
-        participant_id: pID, block_index: currentBlockIndex + 1, block_name: currentBlockType,
-        trial_in_block: currentTrialInBlock, global_trial: globalTrialCounter, timestamp_iso: new Date().toISOString(),
-        chosen_shape: chosenShape, circle_position: s.circlePos, square_position: s.squarePos,
-        axis: s.axis, anchor_state: s.anchor, circle_color: s.circleCol, square_color: s.squareCol,
-        high_reward_shape: highRewardShape, reward_probability_chosen: pChosen, outcome_rewarded: rewarded,
-        reaction_time_ms: rt, reward_reversal_on_this_trial: sched.includes(currentTrialInBlock) ? 1 : 0,
+        participant_id: pID,
+        block_index: currentBlockIndex + 1,
+        block_name: currentBlockType,
+        trial_in_block: currentTrialInBlock,
+        global_trial: globalTrialCounter,
+        timestamp_iso: new Date().toISOString(),
+        chosen_shape: chosenShape,
+        circle_position: s.circlePos,
+        square_position: s.squarePos,
+        axis: s.axis,
+        anchor_state: s.anchor,
+        circle_color: s.circleCol,
+        square_color: s.squareCol,
+        high_reward_shape: highRewardShape,
+        reward_probability_chosen: pChosen,
+        outcome_rewarded: rewarded,
+        reaction_time_ms: rt,
+        reward_reversal_on_this_trial: sched.includes(currentTrialInBlock) ? 1 : 0,
         visual_remap_on_this_trial: (currentBlockType === 'Attention' && [13, 31, 49, 67].includes(currentTrialInBlock)) ? 1 : 0,
         visual_state_label: s.label
     });
@@ -158,9 +217,13 @@ async function endBlock() {
 
     // 1. Calculate Summary
     const summary = {
-        block_total_rewards: blockTrials.reduce((s, r) => s + r.outcome_rewarded, 0),
-        block_mean_rt: Math.round(blockTrials.reduce((s, r) => s + r.reaction_time_ms, 0) / blockTrials.length),
-        block_optimal_rate: (blockTrials.filter(r => r.chosen_shape === (r.reward_probability_chosen === PROB_HIGH ? r.chosen_shape : '')).length / blockTrials.length).toFixed(2)
+        block_total_rewards: blockTrials.reduce((sum, r) => sum + r.outcome_rewarded, 0),
+        block_mean_rt: Math.round(blockTrials.reduce((sum, r) => sum + r.reaction_time_ms, 0) / blockTrials.length),
+        block_optimal_rate: (
+            blockTrials.filter(
+                r => r.chosen_shape === (r.reward_probability_chosen === PROB_HIGH ? r.chosen_shape : '')
+            ).length / blockTrials.length
+        ).toFixed(2)
     };
 
     // 2. Background Upload
@@ -170,9 +233,13 @@ async function endBlock() {
             mode: 'no-cors',
             headers: { 'Content-Type': 'text/plain' },
             body: JSON.stringify({
-                participant_id: pID, assigned_block_order: blockSequence.join('-'),
-                block_index: blockIdx, block_name: currentBlockType,
-                upload_batch_number: blockIdx, block_summary: summary, trials: blockTrials
+                participant_id: pID,
+                assigned_block_order: blockSequence.join('-'),
+                block_index: blockIdx,
+                block_name: currentBlockType,
+                upload_batch_number: blockIdx,
+                block_summary: summary,
+                trials: blockTrials
             })
         });
     }
@@ -197,7 +264,10 @@ function showResults() {
 
 function downloadCSV() {
     const headers = Object.keys(trialData[0]);
-    const csvRows = [headers.join(','), ...trialData.map(row => headers.map(h => `"${row[h]}"`).join(','))];
+    const csvRows = [
+        headers.join(','),
+        ...trialData.map(row => headers.map(h => `"${row[h]}"`).join(','))
+    ];
     const blob = new Blob([csvRows.join('\n')], { type: 'text/csv' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob);
