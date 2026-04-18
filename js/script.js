@@ -110,7 +110,6 @@ function getVisualState(type, trial) {
             s.squarePos = 'bottom';
             s.circleCol = 'var(--circle-purple)';
             s.squareCol = 'var(--square-yellow)';
-            s.anchor = 'anchor-up';
             s.label = 'remap2';
         }
         else if (trial >= 49 && trial < 67) {
@@ -123,11 +122,10 @@ function getVisualState(type, trial) {
         }
         else if (trial >= 67) {
             s.axis = 'horizontal';
-            s.circlePos = 'right';
-            s.squarePos = 'left';
+            s.circlePos = 'left';
+            s.squarePos = 'right';
             s.circleCol = 'var(--circle-purple)';
             s.squareCol = 'var(--square-yellow)';
-            s.anchor = 'anchor-down';
             s.circleRender = 'triangle';
             s.squareRender = 'diamond';
             s.label = 'remap4';
